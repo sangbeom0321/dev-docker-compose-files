@@ -1,0 +1,40 @@
+x-nuplan-volumes: &x-nuplan-volumes
+  volumes:
+    - "${NUPLAN_DATASET}:/data/sets/nuplan:ro"
+    - "${NUPLAN_DATASET}/90_Datasets/92_nuplan/exp:/data/exp/nuplan:ro"
+    - "${DOCKER_MOUNTED_ROOT}:/root/docker_mounted:rw"
+
+
+x-nuplan-maps: &x-nuplan-maps
+  volumes:
+    - "${NUPLAN_DATASET}/maps:/data/sets/nuplan/maps:ro"
+    - "${DOCKER_MOUNTED_ROOT}:/root/docker_mounted:rw"
+
+  # 한번 켜두고 안 꺼지는 개발용 컨테이너
+  # 사용: docker compose up -d dev → docker compose exec dev bash
+  dev:
+    <<: *x-nuplan-volumes
+    image: ${DEV_IMAGE}
+    pull_policy: missing  # 로컬에 없으면 자동으로 pull
+    privileged: true # --privileged
+    env_file:
+      - .env
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - PRIVACY_CONSENT=Y
+      - ACCEPT_EULA=Y
+    network_mode: "host"
+    entrypoint: []
+    command: ["sleep", "infinity"]
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: ["gpu"]
+    stdin_open: true
+    tty: true
